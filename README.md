@@ -28,7 +28,7 @@
             <span class="w-4 h-4 bg-teal-500 rounded-full animate-pulse"></span>
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 uppercase tracking-tight">HCM 1 - HỆ THỐNG ĐIỀU HÀNH BÙ GAP</h1>
-                <p class="text-slate-500 mt-1 text-xs md:text-sm italic">Thiết kế chuẩn Light Mode - Có dán dữ liệu và nút điều chỉnh ngày mượt mà</p>
+                <p class="text-slate-500 mt-1 text-xs md:text-sm italic">Thiết kế chuẩn Light Mode - Bổ sung Ô nhập liệu Checkpoint thông minh</p>
             </div>
         </div>
         
@@ -64,7 +64,7 @@
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 BƯỚC 1: DÁN DỮ LIỆU ĐẦU NGÀY
             </h2>
-            <p class="text-slate-400 text-[11px] mb-3 leading-tight">Copy bảng từ hệ thống/excel (3 cột) dán vào đây để cập nhật Lũy kế cho HCM 1</p>
+            <p class="text-slate-400 text-[11px] mb-3 leading-tight">Copy bảng (Tên, Mục tiêu, TH lũy kế) dán vào đây để cập nhật Lũy kế cho HCM 1</p>
             <textarea id="pasteArea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm focus:outline-none focus:border-amber-400 mb-3 resize-none shadow-inner" placeholder="Dán dữ liệu thực tế tại đây..."></textarea>
             <button onclick="handlePasteData()" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all flex justify-center items-center">
                 LỌC DỮ LIỆU & TÍNH LẠI GAP
@@ -129,20 +129,28 @@
                 </h2>
                 <div class="text-[10px] font-bold text-teal-300">MT: <span id="cpDailyMTText">0</span> Trđ</div>
             </div>
-            <div class="p-5 space-y-4">
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Lũy kế giải ngân hôm nay:</p>
-                    <div id="cpTotalGNCell" class="text-4xl font-black text-amber-500 tracking-tight">0 <span class="text-sm font-bold text-slate-300">Trđ</span></div>
-                    <div id="cpTotalProgressText" class="text-sm font-black text-teal-600 mt-1">Tiến độ: 0%</div>
+            <div class="p-5 flex-1 flex flex-col space-y-4">
+                
+                <div>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Dán kết quả hoặc gõ nhanh số tổng:</p>
+                    <textarea id="cpInputArea" oninput="parseCheckpointArea()" class="w-full h-[60px] bg-white border border-slate-300 rounded-lg p-2 text-amber-600 font-bold text-sm focus:outline-none focus:border-teal-500 shadow-inner resize-none placeholder:text-slate-400 placeholder:font-normal" placeholder="Dán bảng chi tiết hoặc gõ số (VD: 1200)..."></textarea>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                    <div class="text-left">
+                        <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Đã GN Hiện Tại</p>
+                        <div id="cpTotalProgressText" class="text-xs font-black text-teal-600">Tiến độ: 0%</div>
+                    </div>
+                    <div id="cpTotalGNCell" class="text-3xl font-black text-amber-500 tracking-tight">0 <span class="text-xs font-bold text-slate-400">Trđ</span></div>
                 </div>
 
                 <button onclick="recordCheckpoint()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all text-sm active:scale-95">
-                    GHI NHẬN CHECKPOINT
+                    GHI NHẬN CHECKPOINT LIỀN TAY
                 </button>
 
                 <div class="flex-1">
                     <h3 class="text-slate-500 text-[10px] font-bold uppercase mb-2">Nhật ký hôm nay:</h3>
-                    <div class="max-h-[140px] overflow-y-auto pr-1">
+                    <div class="max-h-[120px] overflow-y-auto pr-1">
                         <table class="w-full text-[11px] text-left">
                             <thead class="bg-slate-100 sticky top-0">
                                 <tr class="text-slate-500 font-bold">
@@ -156,7 +164,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="h-28"><canvas id="checkpointChart"></canvas></div>
+                <div class="h-20"><canvas id="checkpointChart"></canvas></div>
             </div>
         </div>
     </div>
@@ -174,7 +182,7 @@
                     <tr class="uppercase border-b border-slate-200 text-slate-500 text-[10px] font-bold">
                         <th class="py-3 px-2 w-[220px]">QLKV / KHU VỰC</th>
                         <th class="py-3 px-2 text-right">MỤC TIÊU NGÀY</th>
-                        <th class="py-3 px-2 text-center text-amber-600">ĐÃ GN <br><span class="text-[9px] font-normal normal-case italic text-slate-400">(Nhập số tại đây)</span></th>
+                        <th class="py-3 px-2 text-center text-amber-600">ĐÃ GN <br><span class="text-[9px] font-normal normal-case italic text-slate-400">(Sửa thủ công tại đây)</span></th>
                         <th class="py-3 px-2 text-center">TIẾN ĐỘ</th>
                         <th class="py-3 px-2 text-right">CÒN LẠI</th>
                         <th class="py-3 px-2 w-[250px]">NHỊP ĐỘ CHẠY SỐ</th>
@@ -189,7 +197,7 @@
         <div class="bg-slate-100 px-5 py-3 flex justify-between items-center border-b border-slate-200">
             <h2 class="text-slate-700 font-bold uppercase text-xs flex items-center tracking-widest">
                 <svg class="w-4 h-4 mr-2 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6 6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
-                MẪU LỆNH CHỈ ĐẠO GỬI NHÓM GAPO (V6.0)
+                MẪU LỆNH CHỈ ĐẠO GỬI NHÓM GAPO (V6.1)
             </h2>
             <button onclick="copyTemplate()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black py-2 px-6 rounded-lg transition-all shadow-md active:scale-95 uppercase">
                 COPY LỆNH
@@ -217,6 +225,7 @@
     let daysPassed = 10;
     let daysRemaining = 20;
     let computedData = [];
+    let manualTotalGN = null; // Cờ theo dõi nếu User gõ số tổng thủ công
     let checkpointChart;
     const checkpointLogs = [];
 
@@ -226,12 +235,10 @@
     window.changeDays = (type, delta) => {
         if (type === 'passed') {
             const el = document.getElementById('inputDaysPassed');
-            let val = parseInt(el.value) + delta;
-            el.value = Math.max(0, val);
+            el.value = Math.max(0, parseInt(el.value) + delta);
         } else {
             const el = document.getElementById('inputTotalDays');
-            let val = parseInt(el.value) + delta;
-            el.value = Math.max(1, val);
+            el.value = Math.max(1, parseInt(el.value) + delta);
         }
         updateTimeConfig();
     }
@@ -263,7 +270,7 @@
         });
     }
 
-    // Logic Dán dữ liệu
+    // XỬ LÝ DÁN DỮ LIỆU ĐẦU NGÀY (BƯỚC 1)
     window.handlePasteData = () => {
         const pasteText = document.getElementById('pasteArea').value.trim();
         if(!pasteText) return;
@@ -289,8 +296,64 @@
         });
         if(updatedCount > 0) {
             calculateData(); renderAll();
-            alert(`Đã cập nhật số liệu thực tế cho ${updatedCount} KV của HCM 1.`);
+            alert(`Đã cập nhật số liệu thực tế Lũy kế cho ${updatedCount} KV của HCM 1.`);
             document.getElementById('pasteArea').value = '';
+        }
+    }
+
+    // XỬ LÝ Ô NHẬP CHECKPOINT NHANH (MỚI)
+    window.parseCheckpointArea = () => {
+        const val = document.getElementById('cpInputArea').value.trim();
+        if (!val) {
+            manualTotalGN = null;
+            updateRegionTotals();
+            return;
+        }
+
+        const lines = val.split('\n');
+        
+        // Trường hợp 1: Nếu chỉ gõ 1 dòng (Số tổng)
+        if (lines.length === 1) {
+            let numStr = val.replace(/,/g, '').replace(/\./g, '').trim();
+            if (!isNaN(parseFloat(numStr)) && isFinite(numStr)) {
+                manualTotalGN = parseFloat(numStr);
+                updateRegionTotals();
+                return;
+            }
+        }
+
+        // Trường hợp 2: Nếu dán nguyên 1 bảng dữ liệu có tên QLKV
+        let updated = false;
+        lines.forEach(line => {
+            const parts = line.split('\t');
+            if (parts.length >= 2) {
+                let actualStr = parts[parts.length - 1].replace(/,/g, '').replace(/\./g, '').trim();
+                let num = parseFloat(actualStr);
+                let namePart = parts[0].toLowerCase();
+                let matchedIndex = computedData.findIndex(r => namePart.includes(r.name.split(' ').pop().toLowerCase()));
+                
+                if (!isNaN(num) && matchedIndex !== -1) {
+                    computedData[matchedIndex].currentGN = num;
+                    const mt = computedData[matchedIndex].newDailyTarget;
+                    computedData[matchedIndex].progressCP = mt > 0 ? (num / mt * 100) : 0;
+                    computedData[matchedIndex].remainCP = mt - num;
+                    updated = true;
+                }
+            }
+        });
+
+        // Nếu dán bảng thành công, cập nhật số liệu xuống chi tiết
+        if (updated) {
+            manualTotalGN = null; 
+            renderCheckpointTableRows();
+            updateRegionTotals();
+        } else {
+            // Cố gắng lọc số nếu user gõ chữ (Ví dụ: "Tổng 1500 Trđ")
+            let numStr = val.replace(/[^\d.-]/g, '');
+            if(numStr && !isNaN(parseFloat(numStr))) {
+                manualTotalGN = parseFloat(numStr);
+                updateRegionTotals();
+            }
         }
     }
 
@@ -299,7 +362,11 @@
         const totalMonthTarget = computedData.reduce((sum, row) => sum + row.monthTarget, 0);
         const totalGap = computedData.reduce((sum, row) => sum + row.gap, 0);
         const totalNewDailyTarget = computedData.reduce((sum, row) => sum + row.newDailyTarget, 0);
-        const totalCurrentGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
+        
+        // Lấy Tổng GN từ Nhập tay HOẶC Cộng dồn từ bảng
+        const sumDetailedGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
+        const totalCurrentGN = manualTotalGN !== null ? manualTotalGN : sumDetailedGN;
+        
         const totalProgress = totalNewDailyTarget ? (totalCurrentGN / totalNewDailyTarget * 100).toFixed(1) : 0;
 
         document.getElementById('totalTHCell').innerHTML = `${formatTrd(totalActualTH)} <span class="text-sm font-bold text-slate-400 uppercase">Trđ</span>`;
@@ -314,7 +381,8 @@
         document.getElementById('cpDailyMTText').innerText = formatTrd(totalNewDailyTarget);
         document.getElementById('cpTotalGNCell').innerHTML = `${formatTrd(totalCurrentGN)} <span class="text-sm font-bold text-slate-300">Trđ</span>`;
         document.getElementById('cpTotalProgressText').innerHTML = `Tiến độ: <span class="${totalProgress>=100 ? 'text-emerald-500' : 'text-teal-600'}">${totalProgress}%</span>`;
-        updateTemplate();
+        
+        updateTemplate(totalCurrentGN, totalNewDailyTarget, totalProgress);
     }
 
     const renderBar = (computedRow) => {
@@ -364,6 +432,11 @@
         const row = input.closest('tr');
         const index = row.dataset.index;
         const value = parseFloat(input.value) || 0;
+        
+        // Hủy cờ nhập tay tổng nếu người dùng gõ thẳng vào bảng chi tiết
+        manualTotalGN = null;
+        document.getElementById('cpInputArea').value = '';
+
         computedData[index].currentGN = value;
         const mtNgàyMới = computedData[index].newDailyTarget;
         const progress = mtNgàyMới > 0 ? (value / mtNgàyMới * 100) : 0;
@@ -378,21 +451,22 @@
 
     const renderAll = () => { renderTargetTable(); renderCheckpointTableRows(); updateRegionTotals(); }
 
-    const updateTemplate = () => {
+    const updateTemplate = (totalGN, totalMT, progress) => {
         const now = new Date();
         const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        const totalGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
-        const totalMT = computedData.reduce((sum, row) => sum + row.newDailyTarget, 0);
-        const progress = totalMT ? (totalGN / totalMT * 100).toFixed(1) : 0;
         let txt = `[CHECKPOINT TIẾN ĐỘ GIẢI NGÂN - VÙNG HCM 1]\n`;
         txt += `⏰ Thời gian: ${time} (Check lần ${checkpointLogs.length + 1})\n`;
         txt += `🎯 TỔNG VÙNG: ${formatTrd(totalGN)} / ${formatTrd(totalMT)} Trđ (${progress}%)\n\n`;
-        txt += `🔥 TIẾN ĐỘ CHI TIẾT TỪNG KHU VỰC:\n`;
-        computedData.forEach(row => {
-            const gn = Number(row.currentGN) || 0;
-            const res = row.remainCP > 0 ? `👉 Còn ${formatTrd(row.remainCP)} Trđ` : `✅ ĐÃ ĐẠT!`;
-            txt += `- ${row.name}: ${formatTrd(gn)} / ${formatTrd(row.newDailyTarget)} Trđ (${row.progressCP.toFixed(1)}%) -> ${res}\n`;
-        });
+        
+        // Chỉ in chi tiết nếu không nhập tay tổng cục
+        if(manualTotalGN === null) {
+            txt += `🔥 TIẾN ĐỘ CHI TIẾT TỪNG KHU VỰC:\n`;
+            computedData.forEach(row => {
+                const gn = Number(row.currentGN) || 0;
+                const res = row.remainCP > 0 ? `👉 Còn ${formatTrd(row.remainCP)} Trđ` : `✅ ĐÃ ĐẠT!`;
+                txt += `- ${row.name}: ${formatTrd(gn)} / ${formatTrd(row.newDailyTarget)} Trđ (${row.progressCP.toFixed(1)}%) -> ${res}\n`;
+            });
+        }
         document.getElementById('directiveTemplateArea').innerText = txt;
     }
 
@@ -403,9 +477,12 @@
     window.recordCheckpoint = () => {
         const now = new Date();
         const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        const totalGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
+        
+        const sumDetailedGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
+        const totalGN = manualTotalGN !== null ? manualTotalGN : sumDetailedGN;
         const totalMT = computedData.reduce((sum, row) => sum + row.newDailyTarget, 0);
         const progress = totalMT ? (totalGN / totalMT * 100).toFixed(1) : 0;
+        
         checkpointLogs.push({ times: time, amount: totalGN, progress: progress });
         document.getElementById('checkpointLogBody').innerHTML = checkpointLogs.map((log, i) => `
             <tr class="border-b border-slate-100 text-slate-600">
@@ -414,12 +491,18 @@
                 <td class="py-2 px-1 text-right text-amber-600 font-black">${formatTrd(log.amount)}</td>
                 <td class="py-2 px-1 text-right font-black text-slate-400">${log.progress}%</td>
             </tr>`).join('');
+            
         if (checkpointChart) {
             checkpointChart.data.labels.push(time);
             checkpointChart.data.datasets[0].data.push(totalGN);
             checkpointChart.update();
         }
-        updateTemplate();
+        
+        // Bạn có thể bỏ comment dòng dưới nếu muốn tự động xóa ô nhập sau khi Ghi nhận
+        // document.getElementById('cpInputArea').value = ''; 
+        // manualTotalGN = null;
+        
+        updateRegionTotals();
     }
 
     const initChart = () => {
