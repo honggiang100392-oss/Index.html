@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HCM 2 Operational Dashboard - Bản V4.2</title>
+    <title>HCM 2 Operational Dashboard - Bản V4.2 (Đã Map Checkpoint)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -24,7 +24,7 @@
                 <span class="w-4 h-4 bg-emerald-400 rounded-full mr-3 animate-pulse"></span>
                 HCM 2 - HỆ THỐNG ĐIỀU HÀNH BÙ GAP
             </h1>
-            <p class="text-slate-400 text-sm">Tự động bóc tách số liệu giải ngân trực tiếp từ hệ thống bằng cơ chế sao chép dán</p>
+            <p class="text-slate-400 text-sm">Tự động bóc tách và đồng bộ số liệu giải ngân trực tiếp (Bản vá lỗi Map Checkpoint)</p>
         </div>
         <div class="flex flex-wrap gap-4 md:gap-8 items-center bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-inner">
             <div class="text-center">
@@ -132,7 +132,7 @@
             <div class="p-5 flex-1 flex flex-col">
                 <div class="mb-4">
                     <label class="text-xs text-slate-400 block mb-2 font-bold uppercase tracking-wider">Dán kết quả hoặc gõ nhanh số tiền:</label>
-                    <textarea id="intradayPasteInput" rows="2" placeholder="Dán bảng F88 hoặc gõ số (Ví dụ: 1200)..." class="w-full bg-slate-950 border border-slate-600 rounded-xl p-3 text-amber-400 font-black font-mono text-base focus:outline-none focus:border-cyan-500 shadow-inner resize-none"></textarea>
+                    <textarea id="intradayPasteInput" rows="2" placeholder="Dán bảng F88 HOẶC để trống nếu đã nhập số ở bảng dưới..." class="w-full bg-slate-950 border border-slate-600 rounded-xl p-3 text-amber-400 font-black font-mono text-base focus:outline-none focus:border-cyan-500 shadow-inner resize-none"></textarea>
                 </div>
                 
                 <button onclick="addIntradayCheckpoint()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-black py-3 rounded-xl transition-all shadow-lg mb-6 tracking-wider">
@@ -179,7 +179,7 @@
                     <tr class="bg-slate-900/50">
                         <th class="w-48">KV / QLKV CHI TIẾT</th>
                         <th class="text-right">Mục Tiêu Ngày (Trđ)</th>
-                        <th class="text-right">Đã GN (Trđ)</th>
+                        <th class="text-center">Đã GN (Trđ)<br><span class="text-[10px] text-slate-400 font-normal italic">(Nhập số tại đây)</span></th>
                         <th class="text-center">Tiến Độ</th>
                         <th class="text-right">Còn Phải Chạy (Trđ)</th>
                         <th class="w-64">Thanh Nhịp Độ Chạy Số</th>
@@ -336,7 +336,7 @@
             }
         }
 
-        // === RENDER UI ===
+        // === RENDER UI CHUNG ===
         function initTargetSettings() {
             const container = document.getElementById('targetSettingsContainer');
             if(!container) return;
@@ -370,8 +370,8 @@
             tbody.innerHTML = "";
             kvConfigurations.forEach(kv => {
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-800/50 transition">
-                        <td class="font-bold text-slate-300">${kv.name}</td>
+                    <tr class="hover:bg-slate-800/50 transition border-b border-slate-700 text-slate-300">
+                        <td class="font-bold">${kv.name}</td>
                         <td class="text-right">${kv.monthTarget}</td>
                         <td class="text-right text-slate-400" id="baseDaily-${kv.id}">0</td>
                         <td class="text-right text-slate-400" id="cumTarget-${kv.id}">0</td>
@@ -390,59 +390,32 @@
             const pastedText = document.getElementById('rawPasteInput').value;
             if (!pastedText.trim()) return;
 
-            const blocks = pastedText.split(/(?=HCM2\.\d|Khu vực \d)/);
             let updateCounter = 0;
-
-            blocks.forEach(block => {
-                const matchKv = block.match(/HCM2\.([1-5])/);
-                if (matchKv) {
-                    const kvId = "HCM2." + matchKv[1];
-                    const numberMatches = block.match(/[\d\.,]+/g);
-                    if (numberMatches) {
-                        let validAmounts = numberMatches
-                            .map(n => parseInt(n.replace(/[\.,]/g, '')))
-                            .filter(num => num > 1000000);
-
-                        if (validAmounts.length > 0) {
-                            const amountInTrd = Math.round(validAmounts[validAmounts.length - 1] / 1000000);
-                            const inputField = document.getElementById(`actual-${kvId}`);
-                            if (inputField) {
-                                inputField.value = amountInTrd;
-                                updateCounter++;
-                            }
+            const lines = pastedText.split('\n');
+            lines.forEach(line => {
+                const parts = line.split('\t');
+                if(parts.length >= 2) {
+                    let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
+                    let num = parseFloat(actualStr);
+                    let namePart = parts[0].toLowerCase();
+                    let matchedIndex = kvConfigurations.findIndex(r => namePart.includes(r.name.split(' - ')[1].toLowerCase()));
+                    
+                    if(!isNaN(num) && matchedIndex !== -1) {
+                        const inputField = document.getElementById(`actual-${kvConfigurations[matchedIndex].id}`);
+                        if(inputField) {
+                            inputField.value = num;
+                            updateCounter++;
                         }
                     }
                 }
             });
-
-            // Nếu phân tích theo mã HCM2.x không ra, thử tìm theo tên nhân viên (Copy từ Excel)
-            if (updateCounter === 0) {
-                const lines = pastedText.split('\n');
-                lines.forEach(line => {
-                    const parts = line.split('\t');
-                    if(parts.length >= 2) {
-                        let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
-                        let num = parseFloat(actualStr);
-                        let namePart = parts[0].toLowerCase();
-                        let matchedIndex = kvConfigurations.findIndex(r => namePart.includes(r.name.split(' - ')[1].toLowerCase()));
-                        
-                        if(!isNaN(num) && matchedIndex !== -1) {
-                            const inputField = document.getElementById(`actual-${kvConfigurations[matchedIndex].id}`);
-                            if(inputField) {
-                                inputField.value = num;
-                                updateCounter++;
-                            }
-                        }
-                    }
-                });
-            }
 
             if (updateCounter > 0) {
                 alert(`🎉 Đã trích xuất thành công số liệu lũy kế của ${updateCounter} QLKV HCM 2!`);
                 document.getElementById('rawPasteInput').value = "";
                 calculateDashboard();
             } else {
-                alert("⚠️ Cấu trúc dán chưa chuẩn hoặc không khớp tên/mã KV. Anh vui lòng copy lại.");
+                alert("⚠️ Cấu trúc dán chưa chuẩn hoặc không khớp tên QLKV. Anh vui lòng copy lại.");
             }
         }
 
@@ -534,50 +507,74 @@
             saveToLocalStorage();
         }
 
-        // === XỬ LÝ TRẠM CHECKPOINT ===
+        // === XỬ LÝ MAP CHECKPOINT (SỬA LỖI KHÔNG KHỚP) ===
+        
+        // Sự kiện khi người dùng gõ số trực tiếp vào bảng chi tiết
+        window.updateIntradaySync = function(kvId) {
+            const val = parseFloat(document.getElementById(`cpInput-${kvId}`).value) || 0;
+            latestKvCheckpointData[kvId] = val;
+            renderKvCheckpointTable(); // Render lại tiến độ %
+            updateIntradayCommand(); // Cập nhật lại Text lệnh copy
+            saveToLocalStorage();
+        }
+
         function addIntradayCheckpoint() {
             const inputField = document.getElementById('intradayPasteInput');
             const rawText = inputField.value.trim();
-            if (!rawText) return;
 
-            let amountInTrd = 0, isKvParsed = false;
+            let amountInTrd = 0;
+            let isKvParsed = false;
+            let manualTotal = null;
             
-            // Xử lý nếu dán bảng từ Excel có chứa tên nhân sự
-            const lines = rawText.split('\n');
-            let totalFromKvs = 0;
-            lines.forEach(line => {
-                const parts = line.split('\t');
-                if(parts.length >= 2) {
-                    let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
-                    let num = parseFloat(actualStr);
-                    let namePart = parts[0].toLowerCase();
-                    let matchedIndex = kvConfigurations.findIndex(r => namePart.includes(r.name.split(' - ')[1].toLowerCase()));
-                    
-                    if(!isNaN(num) && matchedIndex !== -1) {
-                        const kvId = kvConfigurations[matchedIndex].id;
-                        latestKvCheckpointData[kvId] = num;
-                        totalFromKvs += num;
-                        isKvParsed = true;
+            if (rawText) {
+                const lines = rawText.split('\n');
+                let totalFromKvs = 0;
+                lines.forEach(line => {
+                    const parts = line.split('\t');
+                    if(parts.length >= 2) {
+                        let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
+                        let num = parseFloat(actualStr);
+                        let namePart = parts[0].toLowerCase();
+                        let matchedIndex = kvConfigurations.findIndex(r => namePart.includes(r.name.split(' - ')[1].toLowerCase()));
+                        
+                        if(!isNaN(num) && matchedIndex !== -1) {
+                            const kvId = kvConfigurations[matchedIndex].id;
+                            latestKvCheckpointData[kvId] = num;
+                            totalFromKvs += num;
+                            isKvParsed = true;
+                        }
                     }
-                }
-            });
+                });
 
-            if (isKvParsed) {
-                amountInTrd = totalFromKvs;
-            } else {
-                // Xử lý nếu nhập số thủ công
-                let cleanText = rawText.replace(/,/g, '.'); 
-                let parsedFloat = parseFloat(cleanText);
-                if (!isNaN(parsedFloat)) {
-                    amountInTrd = parsedFloat < 100 ? Math.round(parsedFloat * 1000) : Math.round(parsedFloat);
+                if (isKvParsed) {
+                    amountInTrd = totalFromKvs;
                 } else {
-                    const totalMatch = rawText.match(/Tổng\s+.*?\s+([\d\.,]+)/);
-                    if (totalMatch) amountInTrd = Math.round(parseInt(totalMatch[1].replace(/[\.,]/g, '')) / 1000000);
+                    let cleanText = rawText.replace(/,/g, '.'); 
+                    let parsedFloat = parseFloat(cleanText);
+                    if (!isNaN(parsedFloat)) {
+                        manualTotal = parsedFloat < 100 ? Math.round(parsedFloat * 1000) : Math.round(parsedFloat);
+                    } else {
+                        const totalMatch = rawText.match(/Tổng\s+.*?\s+([\d\.,]+)/);
+                        if (totalMatch) manualTotal = Math.round(parseInt(totalMatch[1].replace(/[\.,]/g, '')) / 1000000);
+                    }
                 }
             }
 
-            if (amountInTrd <= 0) {
-                alert("⚠️ Không bóc tách được số tiền hợp lệ.");
+            // Đồng bộ quyết định lấy số Tổng
+            if (manualTotal !== null) {
+                amountInTrd = manualTotal;
+            } else if (!isKvParsed && !rawText) {
+                // NẾU ĐỂ TRỐNG Ô DÁN: TỰ ĐỘNG CỘNG DỒN TỪ BẢNG CHI TIẾT
+                let sum = 0;
+                for (let k in latestKvCheckpointData) sum += latestKvCheckpointData[k];
+                amountInTrd = sum;
+            } else if (isKvParsed) {
+                amountInTrd = totalFromKvs;
+            }
+
+            // Bắt lỗi rỗng
+            if (amountInTrd <= 0 && !rawText) {
+                alert("⚠️ Vui lòng nhập số giải ngân vào bảng chi tiết bên dưới, HOẶC dán dữ liệu vào ô trước khi Ghi nhận!");
                 return;
             }
 
@@ -586,7 +583,8 @@
             const completionPct = globalSumNewDaily > 0 ? (amountInTrd / globalSumNewDaily) * 100 : 0;
 
             checkpointLog.push({ time: timeStr, amount: amountInTrd, pct: completionPct });
-            inputField.value = "";
+            inputField.value = ""; // Dọn dẹp ô dán
+            
             renderCheckpointHistory();
             renderKvCheckpointTable();
             updatePacingChart();
@@ -673,7 +671,6 @@
             cmdArea.value = cmd;
         }
 
-        // === CÁC HÀM RENDER KHÁC ===
         function renderKvCheckpointTable() {
             const tbody = document.getElementById('kvCheckpointTableBody');
             tbody.innerHTML = "";
@@ -692,11 +689,14 @@
                 else if (pct >= 40) { pctColor = "text-yellow-400 font-black"; barColor = "bg-yellow-500"; }
                 else { barColor = "bg-cyan-500"; }
 
+                // Ô INPUT NHẬP TAY NẰM Ở CỘT "ĐÃ GN"
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-800/50 transition border-b border-slate-700">
-                        <td class="font-bold text-slate-300">${kv.name}</td>
+                    <tr class="hover:bg-slate-800/50 transition border-b border-slate-700 text-slate-300">
+                        <td class="font-bold">${kv.name}</td>
                         <td class="text-right">${Math.round(newDaily).toLocaleString()}</td>
-                        <td class="text-right font-black text-amber-400">${currentIntraday.toLocaleString()}</td>
+                        <td class="text-center">
+                            <input type="number" id="cpInput-${kv.id}" value="${currentIntraday}" onchange="updateIntradaySync('${kv.id}')" class="w-20 bg-slate-900 border border-slate-600 rounded p-1.5 text-amber-400 font-bold text-center focus:outline-none focus:border-cyan-500 shadow-inner">
+                        </td>
                         <td class="text-center ${pctColor}">${pct.toFixed(1)}%</td>
                         <td class="text-right text-slate-400 font-bold">${remainingStr}</td>
                         <td class="align-middle">
