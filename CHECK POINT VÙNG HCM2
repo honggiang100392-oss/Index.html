@@ -243,11 +243,11 @@
     <script>
         // Data cấu hình Vùng HCM 2
         let kvConfigurations = [
-            { id: "HCM2.1", name: "HCM2.1 - Võ Công Khanh",  monthTarget: 26.009, defaultActual: 7060 }, 
-            { id: "HCM2.2", name: "HCM2.2 - Trần Nguyễn Thùy Dương", monthTarget: 27.827, defaultActual: 8330 }, 
-            { id: "HCM2.3", name: "HCM2.3 - Nguyễn Vũ Bảo", monthTarget: 31.328, defaultActual: 8122 }, 
-            { id: "HCM2.4", name: "HCM2.4 - Nguyễn Thị Mỹ Ngân", monthTarget: 28.342, defaultActual: 7490 }, 
-            { id: "HCM2.5", name: "HCM2.5 - Trần Thị Kim Ngân", monthTarget: 31.756, defaultActual: 6622 }  
+            { id: "HCM2.1", name: "Khu vục 9.1 - Võ Công Khanh",  monthTarget: 26.009, defaultActual: 7060 }, 
+            { id: "HCM2.2", name: "Khu vực 9.2 - Trần Nguyễn Thùy Dương", monthTarget: 27.827, defaultActual: 8330 }, 
+            { id: "HCM2.3", name: "Khu vực 9.3 - Nguyễn Vũ Bảo", monthTarget: 31.328, defaultActual: 8122 }, 
+            { id: "HCM2.4", name: "Khu vực 9.4 - Nguyễn Thị Mỹ Ngân", monthTarget: 28.342, defaultActual: 7490 }, 
+            { id: "HCM2.5", name: "Khu vực 9.5 - Trần Thị Kim Ngân", monthTarget: 31.756, defaultActual: 6622 }  
         ];
 
         let pacingChart;
