@@ -3,433 +3,789 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Điều Hành Bù Gap - HCM 2</title>
+    <title>HCM 2 Operational Dashboard - Bản V4.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #f8fafc; color: #1e293b; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
-        .card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: all 0.3s ease; }
-        .card:hover { border-color: #cbd5e1; }
-        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .btn-step { background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; transition: all 0.2s; }
-        .btn-step:hover { background-color: #e2e8f0; color: #0f172a; }
-        .btn-step:active { transform: scale(0.9); }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.1rem; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        th { font-weight: bold; color: #94a3b8; padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        td { padding: 12px; border-bottom: 1px solid #1e293b; }
+        table { width: 100%; border-collapse: collapse; }
     </style>
 </head>
-<body class="p-4 md:p-6 text-sm">
+<body class="p-4 sm:p-8 space-y-6">
 
-<div class="container mx-auto max-w-[1400px] space-y-6">
-    
-    <div class="card p-5 flex flex-wrap justify-between items-center">
-        <div class="flex items-center space-x-3 mb-4 md:mb-0">
-            <span class="w-4 h-4 bg-teal-500 rounded-full animate-pulse"></span>
-            <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 uppercase tracking-tight">HCM 2 - HỆ THỐNG ĐIỀU HÀNH BÙ GAP</h1>
-                <p class="text-slate-500 mt-1 text-xs md:text-sm italic">Thiết kế chuẩn Light Mode - Bổ sung nút điều chỉnh ngày mượt mà</p>
+    <header class="bg-slate-800 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg border border-slate-700">
+        <div class="mb-4 md:mb-0">
+            <h1 class="text-3xl font-black text-emerald-400 mb-2 flex items-center">
+                <span class="w-4 h-4 bg-emerald-400 rounded-full mr-3 animate-pulse"></span>
+                HCM 2 - HỆ THỐNG ĐIỀU HÀNH BÙ GAP
+            </h1>
+            <p class="text-slate-400 text-sm">Tự động bóc tách số liệu giải ngân trực tiếp từ hệ thống bằng cơ chế sao chép dán</p>
+        </div>
+        <div class="flex flex-wrap gap-4 md:gap-8 items-center bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-inner">
+            <div class="text-center">
+                <label class="text-xs text-slate-400 block font-bold mb-1 uppercase tracking-wider">Số ngày đã qua</label>
+                <input type="number" id="daysPassed" value="10" onchange="calculateDashboard()" class="w-16 bg-slate-950 text-yellow-400 font-black text-xl text-center rounded-lg border border-slate-600 p-1 focus:outline-none focus:border-yellow-400">
+            </div>
+            <div class="text-center">
+                <label class="text-xs text-slate-400 block font-bold mb-1 uppercase tracking-wider">Tổng ngày LV</label>
+                <input type="number" id="totalWorkingDays" value="30" onchange="calculateDashboard()" class="w-16 bg-slate-950 text-fuchsia-400 font-black text-xl text-center rounded-lg border border-slate-600 p-1 focus:outline-none focus:border-fuchsia-400">
+            </div>
+            <div class="pl-4 md:pl-8 border-l border-slate-700 text-center">
+                <span class="text-xs text-slate-400 block font-bold mb-1 uppercase tracking-wider">Số ngày còn lại</span>
+                <span id="lblDaysLeft" class="text-2xl font-black text-blue-400 tracking-wide">20 / 30 Ngày LV</span>
             </div>
         </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="flex space-x-4 md:space-x-8 items-center bg-slate-50 p-3 rounded-xl border border-slate-200 shadow-sm">
-            <div class="text-center">
-                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Số ngày đã qua</p>
-                <div class="flex items-center space-x-1">
-                    <button onclick="changeDays('passed', -1)" class="btn-step w-8 h-8 rounded-lg font-bold text-lg">-</button>
-                    <input id="inputDaysPassed" type="number" value="10" oninput="updateTimeConfig()" class="w-12 bg-white border border-slate-300 rounded-lg py-1 text-xl font-bold text-slate-800 text-center focus:outline-none focus:border-teal-500 shadow-inner">
-                    <button onclick="changeDays('passed', 1)" class="btn-step w-8 h-8 rounded-lg font-bold text-lg">+</button>
-                </div>
+        <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 flex flex-col">
+            <div class="flex-1">
+                <h3 class="text-sm font-black text-amber-400 mb-2 uppercase tracking-wider flex items-center">
+                    📋 BƯỚC 1: DÁN DỮ LIỆU ĐẦU NGÀY
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">Copy bảng thực tế lũy kế tháng trên F88 rồi dán vào đây</p>
+                <textarea id="rawPasteInput" rows="3" oninput="processPastedText()" placeholder="Nhấp chuột vào đây và nhấn Ctrl + V..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-emerald-500 font-mono text-sm leading-relaxed"></textarea>
             </div>
-            
-            <div class="text-center">
-                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Tổng ngày LV</p>
-                <div class="flex items-center space-x-1">
-                    <button onclick="changeDays('total', -1)" class="btn-step w-8 h-8 rounded-lg font-bold text-lg">-</button>
-                    <input id="inputTotalDays" type="number" value="30" oninput="updateTimeConfig()" class="w-12 bg-white border border-slate-300 rounded-lg py-1 text-xl font-bold text-slate-800 text-center focus:outline-none focus:border-teal-500 shadow-inner">
-                    <button onclick="changeDays('total', 1)" class="btn-step w-8 h-8 rounded-lg font-bold text-lg">+</button>
-                </div>
-            </div>
-
-            <div class="border-l border-slate-300 pl-4 md:pl-8 text-center">
-                <p class="text-slate-500 text-[10px] font-bold uppercase mb-2">Ngày còn lại</p>
-                <div id="daysRemainingText" class="text-2xl font-black text-teal-600">20</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card p-5 bg-slate-800 text-white shadow-xl">
-            <h2 class="font-bold uppercase mb-1 text-xs flex items-center text-amber-400 tracking-wider">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                BƯỚC 1: DÁN DỮ LIỆU ĐẦU NGÀY
-            </h2>
-            <p class="text-slate-400 text-[11px] mb-3 leading-tight">Copy bảng từ hệ thống/excel (3 cột) dán vào đây để cập nhật Lũy kế cho HCM 2</p>
-            <textarea id="pasteArea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm focus:outline-none focus:border-amber-400 mb-3 resize-none shadow-inner" placeholder="Dán dữ liệu thực tế tại đây..."></textarea>
-            <button onclick="handlePasteData()" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all flex justify-center items-center">
-                LỌC DỮ LIỆU & TÍNH LẠI GAP
+            <button onclick="processPastedText()" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black py-3 rounded-xl transition-all shadow-md tracking-wider">
+                ⚡ TRÍCH XUẤT SỐ LŨY KẾ ĐẦU NGÀY
             </button>
         </div>
 
-        <div class="card p-6 flex flex-col justify-between border-l-4 border-l-amber-400">
-            <div class="flex justify-between items-start">
-                <h2 class="text-slate-500 font-bold uppercase text-xs tracking-widest">Trạng thái lũy kế vùng</h2>
-                <div id="regionGapCell" class="px-2 py-1 rounded text-[11px] font-black uppercase">Đang tính...</div>
+        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Trạng Thái Lũy Kế Vùng</span>
+                        <span id="vungGapStatus" class="text-xs px-3 py-1 font-black rounded-lg bg-slate-900 tracking-wide">Chờ dữ liệu</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-400 block font-bold mb-1">Tổng Lũy Kế Đã Đạt:</span>
+                        <span id="vungActualInMonth" class="text-4xl font-black text-amber-400 tracking-tight">0.000 Tỷ</span>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-slate-500 space-y-1">
+                    <p id="vungMaxDeficit">⚠️ Hụt nhiều nhất: Không có</p>
+                    <p id="vungMaxSurplus">⭐ Vượt nhiều nhất: Không có</p>
+                </div>
+                <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-700 text-sm text-slate-400">
+                    <span>Mục tiêu: <b id="vungTargetMonth" class="text-slate-200">0.000 Tỷ</b></span>
+                    <span>Ngày gốc: <b id="vungBaseDaily" class="text-slate-200">0.000 Tỷ</b></span>
+                </div>
             </div>
-            <div class="mt-4">
-                <p class="text-slate-400 text-xs font-semibold uppercase">Tổng Lũy Kế Thực Hiện:</p>
-                <div id="totalTHCell" class="text-5xl font-black text-slate-800 mt-1 tracking-tight">0 <span class="text-lg font-bold text-slate-400">Trđ</span></div>
-            </div>
-            <div class="mt-4 border-t border-slate-100 pt-4 flex justify-between">
-                <p class="text-slate-500 text-xs tracking-wide uppercase">Mục tiêu tháng: <span id="totalTargetCell" class="text-slate-800 font-black">0 Trđ</span></p>
+
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border-t-4 border-t-emerald-500 border-l border-r border-b border-slate-700 flex flex-col justify-between relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-black text-emerald-400 uppercase tracking-widest block mb-2">MỤC TIÊU NGÀY MỚI TOÀN VÙNG</span>
+                    <p class="text-xs text-slate-400 mb-4">Tổng chỉ tiêu sau khi áp gáp chiến thuật 5 QLKV</p>
+                </div>
+                <div class="relative z-10 text-center my-4">
+                    <span id="vungNewDaily" class="text-5xl font-black text-emerald-400 tracking-tight drop-shadow-md">0.000 Tỷ</span>
+                </div>
+                <div class="relative z-10 text-right text-[10px] text-slate-500 font-medium italic mt-4">
+                    * Chiến thuật: Hụt số phải bù gáp - Vượt giữ nguyên áp lực gốc
+                </div>
             </div>
         </div>
 
-        <div class="card p-6 border-t-4 border-teal-500 flex flex-col justify-between bg-teal-50/20">
-            <div>
-                <h2 class="text-teal-700 font-bold uppercase text-xs tracking-widest mb-1">MT Ngày mới toàn vùng</h2>
-                <p class="text-slate-500 text-[11px] italic">Số tiền trung bình phải GN mỗi ngày kể từ hôm nay</p>
-            </div>
-            <div id="totalNewDailyTargetCell" class="text-6xl font-black text-teal-600 text-center my-2 tracking-tighter">0 <span class="text-xl font-bold text-slate-300">Trđ</span></div>
-            <p class="text-slate-400 text-[10px] text-right font-medium">* Chiến thuật Bù Gap: Hụt bù - Vượt giữ nguyên áp lực</p>
-        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="card p-0 lg:col-span-2 overflow-hidden flex flex-col border-slate-200">
-            <div class="p-4 border-b border-slate-100 bg-slate-50/80">
-                <h2 class="text-slate-700 font-bold uppercase text-xs flex items-center tracking-wider">
-                    <svg class="w-4 h-4 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path></svg>
-                    Theo dõi tiến độ bù gap từng khu vực - HCM 2
-                </h2>
-            </div>
-            <div class="overflow-x-auto p-2">
-                <table class="w-full text-left text-xs md:text-sm">
+        
+        <div class="lg:col-span-2 bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden flex flex-col">
+            <h3 class="p-5 border-b border-slate-700 text-sm font-black text-slate-300 uppercase tracking-widest flex items-center bg-slate-800/50">
+                📋 Bổ Chỉ Tiêu Ngày Và Theo Dõi Tiến Độ Bù Gáp Từng KV
+            </h3>
+            
+            <div class="overflow-x-auto flex-1 p-2">
+                <table class="w-full text-sm whitespace-nowrap">
                     <thead>
-                        <tr class="uppercase border-b border-slate-200">
-                            <th class="py-3 px-2 text-slate-500 text-[10px]">QLKV / KHU VỰC</th>
-                            <th class="py-3 px-2 text-right text-slate-500 text-[10px]">KH THÁNG</th>
-                            <th class="py-3 px-2 text-right text-slate-500 text-[10px]">MT GỐC</th>
-                            <th class="py-3 px-2 text-right text-slate-500 text-[10px]">LK KH</th>
-                            <th class="py-3 px-2 text-right text-amber-600 text-[10px] bg-amber-50">THỰC TẾ LK</th>
-                            <th class="py-3 px-2 text-right text-slate-500 text-[10px]">GAP</th>
-                            <th class="py-3 px-2 text-right text-teal-600 text-[10px] font-bold">MT NGÀY MỚI</th>
+                        <tr class="bg-slate-900/50">
+                            <th>KV / QLKV</th>
+                            <th class="text-right">KH Tháng (Tỷ)</th>
+                            <th class="text-right">MT Gốc (Trđ)</th>
+                            <th class="text-right">LK KH (Trđ)</th>
+                            <th class="text-right text-amber-500">Thực Tế LK (Trđ)</th>
+                            <th class="text-right">Gap Hiện Tại (Trđ)</th>
+                            <th class="text-right text-emerald-400">MT NGÀY MỚI (Trđ)</th>
                         </tr>
                     </thead>
-                    <tbody id="targetTableBody"></tbody>
+                    <tbody id="kvTableBody">
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="card p-0 flex flex-col shadow-lg border-slate-300">
-            <div class="p-4 bg-slate-800 text-white flex justify-between items-center rounded-t-lg">
-                <h2 class="font-bold uppercase text-xs flex items-center tracking-widest">
-                    <svg class="w-4 h-4 mr-2 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    TRẠM CHECKPOINT
-                </h2>
-                <div class="text-[10px] font-bold text-teal-300">MT: <span id="cpDailyMTText">0</span> Trđ</div>
+        <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 flex flex-col relative overflow-hidden">
+            <div class="p-5 border-b border-slate-700 bg-slate-900/50 flex justify-between items-center">
+                <h3 class="text-sm font-black text-cyan-400 uppercase tracking-widest flex items-center drop-shadow-md">
+                    🕒 TRẠM CHECKPOINT
+                </h3>
+                <span id="lblCheckpointTarget" class="text-xs bg-cyan-950 text-cyan-300 border border-cyan-700 px-3 py-1 rounded-xl font-black font-mono">MT: 0 Trđ</span>
             </div>
-            <div class="p-5 space-y-4">
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Lũy kế giải ngân hôm nay:</p>
-                    <div id="cpTotalGNCell" class="text-4xl font-black text-amber-500 tracking-tight">0 <span class="text-sm font-bold text-slate-300">Trđ</span></div>
-                    <div id="cpTotalProgressText" class="text-sm font-black text-teal-600 mt-1">Tiến độ: 0%</div>
+            
+            <div class="p-5 flex-1 flex flex-col">
+                <div class="mb-4">
+                    <label class="text-xs text-slate-400 block mb-2 font-bold uppercase tracking-wider">Dán kết quả hoặc gõ nhanh số tiền:</label>
+                    <textarea id="intradayPasteInput" rows="2" placeholder="Dán bảng F88 hoặc gõ số (Ví dụ: 1200)..." class="w-full bg-slate-950 border border-slate-600 rounded-xl p-3 text-amber-400 font-black font-mono text-base focus:outline-none focus:border-cyan-500 shadow-inner resize-none"></textarea>
                 </div>
-
-                <button onclick="recordCheckpoint()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all text-sm active:scale-95">
-                    GHI NHẬN CHECKPOINT
+                
+                <button onclick="addIntradayCheckpoint()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-black py-3 rounded-xl transition-all shadow-lg mb-6 tracking-wider">
+                    📥 GHI NHẬN CHECKPOINT LIỀN TAY
                 </button>
 
-                <div class="flex-1">
-                    <h3 class="text-slate-500 text-[10px] font-bold uppercase mb-2">Nhật ký hôm nay:</h3>
-                    <div class="max-h-[140px] overflow-y-auto pr-1">
-                        <table class="w-full text-[11px] text-left">
-                            <thead class="bg-slate-100 sticky top-0">
-                                <tr class="text-slate-500 font-bold">
-                                    <th class="py-1 px-1">Lần</th>
-                                    <th class="py-1 px-1">Giờ</th>
-                                    <th class="py-1 px-1 text-right">Đã GN</th>
-                                    <th class="py-1 px-1 text-right">%</th>
+                <div class="flex-1 flex flex-col min-h-0">
+                    <span class="text-xs font-black text-slate-400 block mb-3 uppercase tracking-wider">Nhật Ký Checkpoint Hôm Nay:</span>
+                    <div class="overflow-y-auto flex-1 pr-2 mb-4">
+                        <table class="w-full text-sm">
+                            <thead class="sticky top-0 bg-slate-800 z-10">
+                                <tr>
+                                    <th class="py-2 px-1 text-left text-xs font-bold text-slate-500 border-b border-slate-700">Lần</th>
+                                    <th class="py-2 px-1 text-left text-xs font-bold text-slate-500 border-b border-slate-700">Mốc Giờ</th>
+                                    <th class="py-2 px-1 text-right text-xs font-bold text-slate-500 border-b border-slate-700">Đã GN (Trđ)</th>
+                                    <th class="py-2 px-1 text-right text-xs font-bold text-slate-500 border-b border-slate-700">Tiến Độ</th>
                                 </tr>
                             </thead>
-                            <tbody id="checkpointLogBody"></tbody>
+                            <tbody id="checkpointHistoryBody" class="text-slate-300">
+                                <tr><td colspan="4" class="text-center py-4 text-slate-500 italic">Chưa có dữ liệu checkpoint</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
-                <div class="h-28"><canvas id="checkpointChart"></canvas></div>
+
+                <div class="h-24 mt-auto">
+                    <canvas id="miniPacingChart"></canvas>
+                </div>
             </div>
         </div>
+
     </div>
 
-    <div class="card p-0 overflow-hidden border-slate-200">
-        <div class="p-4 border-b border-slate-100 bg-slate-50/80">
-            <h2 class="text-slate-700 font-bold uppercase text-xs flex items-center tracking-wider">
-                <span class="w-2 h-4 bg-teal-500 mr-2 rounded-full"></span>
-                Tiến độ thực hiện realtime từng Quản lý khu vực
-            </h2>
+    <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden">
+        <div class="p-5 border-b border-slate-700 bg-slate-900/30">
+            <h3 class="text-sm font-black text-slate-300 uppercase tracking-widest flex items-center">
+                📊 TIẾN ĐỘ CHECKPOINT CHI TIẾT TỪNG QLKV
+            </h3>
         </div>
-        <div class="overflow-x-auto p-4">
-            <table class="w-full text-left text-sm table-fixed">
+        
+        <div class="overflow-x-auto p-2">
+            <table class="w-full text-sm whitespace-nowrap table-fixed">
                 <thead>
-                    <tr class="uppercase border-b border-slate-200 text-slate-500 text-[10px] font-bold">
-                        <th class="py-3 px-2 w-[220px]">QLKV / KHU VỰC</th>
-                        <th class="py-3 px-2 text-right">MỤC TIÊU NGÀY</th>
-                        <th class="py-3 px-2 text-center text-amber-600">ĐÃ GN <br><span class="text-[9px] font-normal normal-case italic text-slate-400">(Nhập số tại đây)</span></th>
-                        <th class="py-3 px-2 text-center">TIẾN ĐỘ</th>
-                        <th class="py-3 px-2 text-right">CÒN LẠI</th>
-                        <th class="py-3 px-2 w-[250px]">NHỊP ĐỘ CHẠY SỐ</th>
+                    <tr class="bg-slate-900/50">
+                        <th class="w-48">KV / QLKV CHI TIẾT</th>
+                        <th class="text-right">Mục Tiêu Ngày (Trđ)</th>
+                        <th class="text-right">Đã GN (Trđ)</th>
+                        <th class="text-center">Tiến Độ</th>
+                        <th class="text-right">Còn Phải Chạy (Trđ)</th>
+                        <th class="w-64">Thanh Nhịp Độ Chạy Số</th>
                     </tr>
                 </thead>
-                <tbody id="checkpointTableBody"></tbody>
+                <tbody id="kvCheckpointTableBody">
+                </tbody>
             </table>
         </div>
     </div>
 
-    <div class="card overflow-hidden border border-slate-300 shadow-xl">
-        <div class="bg-slate-100 px-5 py-3 flex justify-between items-center border-b border-slate-200">
-            <h2 class="text-slate-700 font-bold uppercase text-xs flex items-center tracking-widest">
-                <svg class="w-4 h-4 mr-2 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6 6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
-                MẪU LỆNH CHỈ ĐẠO GỬI NHÓM GAPO (V6.0)
-            </h2>
-            <button onclick="copyTemplate()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black py-2 px-6 rounded-lg transition-all shadow-md active:scale-95 uppercase">
-                COPY LỆNH
-            </button>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 flex flex-col">
+            <div class="p-5 border-b border-slate-700 bg-slate-900/30 flex justify-between items-center">
+                <h3 class="text-sm font-black text-cyan-400 uppercase tracking-widest">
+                    📢 Mẫu Lệnh Chỉ Đạo Sau Checkpoint
+                </h3>
+                <button onclick="copyIntradayCommandText()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black py-2 px-4 rounded-xl transition-all shadow-md tracking-wider uppercase">
+                    Copy Lệnh
+                </button>
+            </div>
+            <textarea id="intradayCommand" rows="12" class="w-full bg-slate-950 border-none p-5 text-cyan-400 font-mono text-sm leading-relaxed focus:outline-none shadow-inner resize-none flex-1 rounded-b-2xl" placeholder="Anh nhập dữ liệu checkpoint bên trên, lệnh chỉ đạo sẽ tự động sinh ra ở đây..." readonly></textarea>
         </div>
-        <div class="p-6 bg-slate-50">
-            <pre id="directiveTemplateArea" class="text-slate-700 font-mono text-[13px] whitespace-pre-wrap leading-relaxed bg-white p-5 rounded-lg border border-slate-200 shadow-inner"></pre>
+
+        <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 flex flex-col">
+            <div class="p-5 border-b border-slate-700 bg-slate-900/30 flex justify-between items-center flex-wrap gap-3">
+                <h3 class="text-sm font-black text-emerald-400 uppercase tracking-widest">
+                    🚀 Mẫu Lệnh Chỉ Đạo ĐẦU NGÀY
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="resetDashboardData()" class="bg-red-900/60 hover:bg-red-800 border border-red-600 text-red-200 text-xs font-black py-2 px-3 rounded-xl transition-all shadow-md tracking-wider" title="Sang ngày mới">
+                        Làm Mới Số
+                    </button>
+                    <button onclick="copyCommandText()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-black py-2 px-4 rounded-xl transition-all shadow-md tracking-wider uppercase">
+                        Copy Lệnh
+                    </button>
+                </div>
+            </div>
+            <textarea id="zaloCommand" rows="12" class="w-full bg-slate-950 border-none p-5 text-emerald-400 font-mono text-sm leading-relaxed focus:outline-none shadow-inner resize-none flex-1 rounded-b-2xl" readonly></textarea>
         </div>
     </div>
 
-</div>
+    <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6">
+        <div class="mb-4">
+            <h3 class="text-sm font-black text-fuchsia-400 uppercase tracking-widest mb-1 flex items-center">
+                ⚙️ CÀI ĐẶT MỤC TIÊU THÁNG (Sheet BDM - QL_HCM2)
+            </h3>
+            <p class="text-xs text-slate-400">Mỗi đầu tháng, anh lấy số liệu từ sheet BDM điền vào đây, sau đó bấm <b>LƯU MỤC TIÊU</b>. Đơn vị: <b>Tỷ đồng</b> (Ví dụ: 26.009).</p>
+        </div>
+        
+        <div id="targetSettingsContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        </div>
+        
+        <div class="text-right">
+            <button onclick="saveTargets()" class="w-full sm:w-auto bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-sm font-black py-3 px-8 rounded-xl transition-all shadow-lg tracking-wider">
+                💾 LƯU MỤC TIÊU MỚI
+            </button>
+        </div>
+    </div>
 
-<script>
-    // DỮ LIỆU HCM 2 (CẬP NHẬT TỪ ẢNH OCR)
-    let regionData = [
-        { name: "Võ Công Khanh", monthTarget: 26009, actualTH: 7060 },
-        { name: "Trần Nguyễn Thùy Dương", monthTarget: 27827, actualTH: 8330 },
-        { name: "Nguyễn Vũ Bảo", monthTarget: 31328, actualTH: 8122 },
-        { name: "Nguyễn Thị Mỹ Ngân", monthTarget: 28342, actualTH: 7490 },
-        { name: "Trần Thị Kim Ngân", monthTarget: 31756, actualTH: 6622 }
-    ];
+    <script>
+        // Data cấu hình Vùng HCM 2
+        let kvConfigurations = [
+            { id: "HCM2.1", name: "HCM2.1 - Võ Công Khanh",  monthTarget: 26.009, defaultActual: 7060 }, 
+            { id: "HCM2.2", name: "HCM2.2 - Trần Nguyễn Thùy Dương", monthTarget: 27.827, defaultActual: 8330 }, 
+            { id: "HCM2.3", name: "HCM2.3 - Nguyễn Vũ Bảo", monthTarget: 31.328, defaultActual: 8122 }, 
+            { id: "HCM2.4", name: "HCM2.4 - Nguyễn Thị Mỹ Ngân", monthTarget: 28.342, defaultActual: 7490 }, 
+            { id: "HCM2.5", name: "HCM2.5 - Trần Thị Kim Ngân", monthTarget: 31.756, defaultActual: 6622 }  
+        ];
 
-    let totalDays = 30;
-    let daysPassed = 10;
-    let daysRemaining = 20;
-    let computedData = [];
-    let checkpointChart;
-    const checkpointLogs = [];
+        let pacingChart;
+        let globalSumNewDaily = 0;
+        let checkpointLog = []; 
+        let yesterdayCheckpointLog = []; 
+        let computedNewDailyState = {}; 
+        let latestKvCheckpointData = { "HCM2.1": 0, "HCM2.2": 0, "HCM2.3": 0, "HCM2.4": 0, "HCM2.5": 0 };
 
-    const formatTrd = (num) => Math.round(num).toLocaleString('vi-VN');
-
-    // Logic Tăng/Giảm ngày
-    window.changeDays = (type, delta) => {
-        if (type === 'passed') {
-            const el = document.getElementById('inputDaysPassed');
-            let val = parseInt(el.value) + delta;
-            el.value = Math.max(0, val);
-        } else {
-            const el = document.getElementById('inputTotalDays');
-            let val = parseInt(el.value) + delta;
-            el.value = Math.max(1, val);
+        function parseTime(t) {
+            if (!t) return 0;
+            let parts = t.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
         }
-        updateTimeConfig();
-    }
 
-    const calculateData = () => {
-        daysRemaining = Math.max(0, totalDays - daysPassed);
-        document.getElementById('daysRemainingText').innerText = daysRemaining;
-
-        computedData = regionData.map((row, index) => {
-            const safeTotalDays = totalDays > 0 ? totalDays : 1; 
-            const mtOriginDaily = row.monthTarget / safeTotalDays;
-            const lkKH = mtOriginDaily * daysPassed;
-            const gap = row.actualTH - lkKH;
-            
-            let newDailyTarget = mtOriginDaily;
-            if (gap < 0 && daysRemaining > 0) {
-                newDailyTarget = mtOriginDaily + (Math.abs(gap) / daysRemaining);
-            } else if (daysRemaining === 0) {
-                newDailyTarget = Math.max(0, -gap);
-            }
-
-            const currentGN = (computedData[index] && computedData[index].currentGN) || 0;
-            const progressCP = newDailyTarget > 0 ? (currentGN / newDailyTarget * 100) : 0;
-            const remainCP = newDailyTarget - currentGN;
-
-            return {
-                ...row, mtOriginDaily, lkKH, gap, newDailyTarget, currentGN, progressCP, remainCP
+        // === LƯU TRỮ DỮ LIỆU ===
+        function saveToLocalStorage() {
+            const dataToSave = {
+                daysPassed: document.getElementById('daysPassed').value,
+                totalWorkingDays: document.getElementById('totalWorkingDays').value,
+                actuals: {},
+                targets: {},
+                checkpointLog: checkpointLog,
+                yesterdayCheckpointLog: yesterdayCheckpointLog,
+                latestKvCheckpointData: latestKvCheckpointData
             };
-        });
-    }
+            kvConfigurations.forEach(kv => {
+                const inputField = document.getElementById(`actual-${kv.id}`);
+                if (inputField) dataToSave.actuals[kv.id] = inputField.value;
+                dataToSave.targets[kv.id] = kv.monthTarget;
+            });
+            localStorage.setItem('hcm2_v4_saved_state', JSON.stringify(dataToSave));
+        }
 
-    window.handlePasteData = () => {
-        const pasteText = document.getElementById('pasteArea').value.trim();
-        if(!pasteText) return;
-        const lines = pasteText.split('\n');
-        let updatedCount = 0;
-        lines.forEach(line => {
-            const parts = line.split('\t');
-            if(parts.length >= 2) {
-                let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
-                let num = parseFloat(actualStr);
-                let namePart = parts[0].toLowerCase();
-                let matchedIndex = regionData.findIndex(r => namePart.includes(r.name.split(' ').pop().toLowerCase()));
-                if(!isNaN(num)) {
-                    if(matchedIndex !== -1) {
-                        regionData[matchedIndex].actualTH = num;
-                        updatedCount++;
-                    } else if (updatedCount < regionData.length) {
-                        regionData[updatedCount].actualTH = num;
-                        updatedCount++;
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('hcm2_v4_saved_state');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    if (data.daysPassed) document.getElementById('daysPassed').value = data.daysPassed;
+                    if (data.totalWorkingDays) document.getElementById('totalWorkingDays').value = data.totalWorkingDays;
+                    if (data.checkpointLog) checkpointLog = data.checkpointLog;
+                    if (data.yesterdayCheckpointLog) yesterdayCheckpointLog = data.yesterdayCheckpointLog;
+                    if (data.latestKvCheckpointData) latestKvCheckpointData = data.latestKvCheckpointData;
+                    
+                    if (data.targets) {
+                        kvConfigurations.forEach(kv => {
+                            if (data.targets[kv.id] !== undefined) {
+                                kv.monthTarget = parseFloat(data.targets[kv.id]);
+                            }
+                        });
                     }
+
+                    if (data.actuals) {
+                        setTimeout(() => { 
+                            kvConfigurations.forEach(kv => {
+                                if (data.actuals[kv.id] !== undefined) {
+                                    const inputField = document.getElementById(`actual-${kv.id}`);
+                                    if (inputField) inputField.value = data.actuals[kv.id];
+                                }
+                            });
+                            calculateDashboard();
+                        }, 50);
+                    }
+                } catch(e) {
+                    console.error("Lỗi khôi phục dữ liệu:", e);
                 }
             }
-        });
-        if(updatedCount > 0) {
-            calculateData(); renderAll();
-            alert(`Đã cập nhật số liệu thực tế cho ${updatedCount} KV.`);
-            document.getElementById('pasteArea').value = '';
         }
-    }
 
-    const updateRegionTotals = () => {
-        const totalActualTH = computedData.reduce((sum, row) => sum + row.actualTH, 0);
-        const totalMonthTarget = computedData.reduce((sum, row) => sum + row.monthTarget, 0);
-        const totalGap = computedData.reduce((sum, row) => sum + row.gap, 0);
-        const totalNewDailyTarget = computedData.reduce((sum, row) => sum + row.newDailyTarget, 0);
-        const totalCurrentGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
-        const totalProgress = totalNewDailyTarget ? (totalCurrentGN / totalNewDailyTarget * 100).toFixed(1) : 0;
+        function resetDashboardData() {
+            if (confirm("Anh có chắc chắn muốn xóa toàn bộ số liệu Thực tế & Checkpoint để sang ngày mới?\n(Hệ thống sẽ lưu Nhật ký checkpoint hôm nay làm mốc đối sánh cho ngày mai!)")) {
+                yesterdayCheckpointLog = [...checkpointLog]; 
+                checkpointLog = [];
+                latestKvCheckpointData = { "HCM2.1": 0, "HCM2.2": 0, "HCM2.3": 0, "HCM2.4": 0, "HCM2.5": 0 };
+                kvConfigurations.forEach(kv => {
+                    const inputField = document.getElementById(`actual-${kv.id}`);
+                    if (inputField) inputField.value = 0;
+                });
+                
+                let curDays = parseInt(document.getElementById('daysPassed').value) || 1;
+                document.getElementById('daysPassed').value = curDays + 1; 
 
-        document.getElementById('totalTHCell').innerHTML = `${formatTrd(totalActualTH)} <span class="text-sm font-bold text-slate-400 uppercase">Trđ</span>`;
-        document.getElementById('totalTargetCell').innerText = `${formatTrd(totalMonthTarget)} Trđ`;
-        document.getElementById('totalNewDailyTargetCell').innerHTML = `${formatTrd(totalNewDailyTarget)} <span class="text-xl font-bold text-slate-300">Trđ</span>`;
-        
-        const gapCell = document.getElementById('regionGapCell');
-        const isSurplus = totalGap >= 0;
-        gapCell.innerText = `${isSurplus ? 'Vượt Vùng: +' : 'Hụt Vùng: '}${formatTrd(totalGap)} Trđ`;
-        gapCell.className = `px-2 py-1 rounded text-[10px] font-black border ${isSurplus ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`;
-
-        document.getElementById('cpDailyMTText').innerText = formatTrd(totalNewDailyTarget);
-        document.getElementById('cpTotalGNCell').innerHTML = `${formatTrd(totalCurrentGN)} <span class="text-sm font-bold text-slate-300">Trđ</span>`;
-        document.getElementById('cpTotalProgressText').innerHTML = `Tiến độ: <span class="${totalProgress>=100 ? 'text-emerald-500' : 'text-teal-600'}">${totalProgress}%</span>`;
-        updateTemplate();
-    }
-
-    const renderBar = (computedRow) => {
-        const progress = Math.min(computedRow.progressCP, 100);
-        const barColor = computedRow.progressCP >= 100 ? 'bg-emerald-500' : 'bg-teal-500';
-        return `<div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200 shadow-inner">
-                    <div class="h-full rounded-full transition-all duration-700 ease-in-out ${barColor}" style="width: ${progress}%"></div>
-                </div>`;
-    }
-
-    const renderTargetTable = () => {
-        document.getElementById('targetTableBody').innerHTML = computedData.map(row => `
-            <tr class="border-b border-slate-100 transition hover:bg-slate-50/50">
-                <td class="py-4 px-2 font-black text-slate-700">${row.name}</td>
-                <td class="py-4 px-2 text-right font-medium">${formatTrd(row.monthTarget)}</td>
-                <td class="py-4 px-2 text-right text-slate-400">${formatTrd(row.mtOriginDaily)}</td>
-                <td class="py-4 px-2 text-right text-slate-400">${formatTrd(row.lkKH)}</td>
-                <td class="py-4 px-2 text-right font-black text-amber-600 bg-amber-50/30">${formatTrd(row.actualTH)}</td>
-                <td class="py-4 px-2 text-right font-bold ${row.gap >= 0 ? 'text-emerald-600' : 'text-rose-500'}">${row.gap >= 0 ? '+' : ''}${formatTrd(row.gap)}</td>
-                <td class="py-4 px-2 text-right font-black text-teal-600">${formatTrd(row.newDailyTarget)}</td>
-            </tr>`).join('');
-    }
-
-    const renderCheckpointTableRows = () => {
-        document.getElementById('checkpointTableBody').innerHTML = computedData.map((row, index) => `
-            <tr data-index="${index}" class="border-b border-slate-100 transition hover:bg-slate-50/50">
-                <td class="py-4 px-2 font-black text-slate-700">${row.name}</td>
-                <td class="py-4 px-2 text-right font-bold text-slate-500">${formatTrd(row.newDailyTarget)}</td>
-                <td class="py-4 px-2 text-center">
-                    <input type="number" step="0.1" value="${row.currentGN || ''}" class="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-amber-600 font-black text-center focus:outline-none focus:border-teal-500 shadow-sm" oninput="updateCheckpointInput(this)" />
-                </td>
-                <td class="py-4 px-2 text-center progressCP">
-                    <span class="px-2 py-1 rounded text-[11px] font-black ${row.progressCP >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-slate-700'}">${row.progressCP.toFixed(1)}%</span>
-                </td>
-                <td class="py-4 px-2 text-right text-[11px] remainCP font-black ${row.remainCP <= 0 ? 'text-emerald-500' : 'text-slate-400'}">${formatTrd(row.remainCP)}</td>
-                <td class="py-4 px-2 barBar">${renderBar(row)}</td>
-            </tr>`).join('');
-    }
-
-    window.updateTimeConfig = () => {
-        totalDays = parseFloat(document.getElementById('inputTotalDays').value) || 0;
-        daysPassed = parseFloat(document.getElementById('inputDaysPassed').value) || 0;
-        calculateData(); renderAll();
-    }
-
-    window.updateCheckpointInput = (input) => {
-        const row = input.closest('tr');
-        const index = row.dataset.index;
-        const value = parseFloat(input.value) || 0;
-        computedData[index].currentGN = value;
-        const mtNgàyMới = computedData[index].newDailyTarget;
-        const progress = mtNgàyMới > 0 ? (value / mtNgàyMới * 100) : 0;
-        computedData[index].progressCP = progress;
-        computedData[index].remainCP = mtNgàyMới - value;
-
-        row.querySelector('.progressCP').innerHTML = `<span class="px-2 py-1 rounded text-[11px] font-black ${progress >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-slate-700'}">${progress.toFixed(1)}%</span>`;
-        row.querySelector('.remainCP').innerHTML = `<span class="font-black ${computedData[index].remainCP <= 0 ? 'text-emerald-500' : 'text-slate-400'}">${formatTrd(computedData[index].remainCP)}</span>`;
-        row.querySelector('.barBar').innerHTML = renderBar(computedData[index]);
-        updateRegionTotals();
-    }
-
-    const renderAll = () => { renderTargetTable(); renderCheckpointTableRows(); updateRegionTotals(); }
-
-    const updateTemplate = () => {
-        const now = new Date();
-        const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        const totalGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
-        const totalMT = computedData.reduce((sum, row) => sum + row.newDailyTarget, 0);
-        const progress = totalMT ? (totalGN / totalMT * 100).toFixed(1) : 0;
-        let txt = `[CHECKPOINT TIẾN ĐỘ GIẢI NGÂN - VÙNG HCM 2]\n`;
-        txt += `⏰ Thời gian: ${time} (Check lần ${checkpointLogs.length + 1})\n`;
-        txt += `🎯 TỔNG VÙNG: ${formatTrd(totalGN)} / ${formatTrd(totalMT)} Trđ (${progress}%)\n\n`;
-        txt += `🔥 TIẾN ĐỘ CHI TIẾT TỪNG KHU VỰC:\n`;
-        computedData.forEach(row => {
-            const gn = Number(row.currentGN) || 0;
-            const res = row.remainCP > 0 ? `👉 Còn ${formatTrd(row.remainCP)} Trđ` : `✅ ĐÃ ĐẠT!`;
-            txt += `- ${row.name}: ${formatTrd(gn)} / ${formatTrd(row.newDailyTarget)} Trđ (${row.progressCP.toFixed(1)}%) -> ${res}\n`;
-        });
-        document.getElementById('directiveTemplateArea').innerText = txt;
-    }
-
-    window.copyTemplate = () => {
-        navigator.clipboard.writeText(document.getElementById('directiveTemplateArea').innerText).then(() => alert('Đã copy mẫu lệnh HCM 2!'));
-    }
-
-    window.recordCheckpoint = () => {
-        const now = new Date();
-        const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        const totalGN = computedData.reduce((sum, row) => sum + (Number(row.currentGN) || 0), 0);
-        const totalMT = computedData.reduce((sum, row) => sum + row.newDailyTarget, 0);
-        const progress = totalMT ? (totalGN / totalMT * 100).toFixed(1) : 0;
-        checkpointLogs.push({ times: time, amount: totalGN, progress: progress });
-        document.getElementById('checkpointLogBody').innerHTML = checkpointLogs.map((log, i) => `
-            <tr class="border-b border-slate-100 text-slate-600">
-                <td class="py-2 px-1 font-bold">${i + 1}</td>
-                <td class="py-2 px-1 text-teal-600 font-mono">${log.times}</td>
-                <td class="py-2 px-1 text-right text-amber-600 font-black">${formatTrd(log.amount)}</td>
-                <td class="py-2 px-1 text-right font-black text-slate-400">${log.progress}%</td>
-            </tr>`).join('');
-        if (checkpointChart) {
-            checkpointChart.data.labels.push(time);
-            checkpointChart.data.datasets[0].data.push(totalGN);
-            checkpointChart.update();
+                saveToLocalStorage();
+                location.reload();
+            }
         }
-        updateTemplate();
-    }
 
-    const initChart = () => {
-        const ctx = document.getElementById('checkpointChart').getContext('2d');
-        checkpointChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ data: [], borderColor: '#0d9488', backgroundColor: 'rgba(20, 184, 166, 0.05)', borderWidth: 3, pointRadius: 2, fill: true, tension: 0.4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, beginAtZero: true } } }
-        });
-    }
+        // === RENDER UI ===
+        function initTargetSettings() {
+            const container = document.getElementById('targetSettingsContainer');
+            if(!container) return;
+            container.innerHTML = "";
+            kvConfigurations.forEach(kv => {
+                const shortName = kv.name.split(' - ')[1];
+                container.innerHTML += `
+                    <div>
+                        <label class="text-xs text-slate-400 font-bold block mb-1 uppercase tracking-wider">${kv.id}</label>
+                        <span class="text-sm text-slate-200 font-bold block mb-2 truncate">${shortName}</span>
+                        <input type="number" step="0.001" id="targetSetting-${kv.id}" value="${kv.monthTarget}" class="w-full bg-black border border-slate-600 rounded-lg px-2 py-1.5 text-fuchsia-400 font-black font-mono text-lg focus:outline-none focus:border-fuchsia-400">
+                    </div>
+                `;
+            });
+        }
 
-    initChart(); calculateData(); renderAll();
-</script>
+        function saveTargets() {
+            kvConfigurations.forEach(kv => {
+                const targetInput = document.getElementById('targetSetting-' + kv.id);
+                if (targetInput) kv.monthTarget = parseFloat(targetInput.value) || 0;
+            });
+            saveToLocalStorage();
+            initTable();
+            calculateDashboard();
+            alert("✅ Đã cập nhật Mục Tiêu Tháng mới cho HCM 2 thành công!");
+        }
+
+        function initTable() {
+            const tbody = document.getElementById('kvTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = "";
+            kvConfigurations.forEach(kv => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="font-bold text-slate-300">${kv.name}</td>
+                        <td class="text-right">${kv.monthTarget}</td>
+                        <td class="text-right text-slate-400" id="baseDaily-${kv.id}">0</td>
+                        <td class="text-right text-slate-400" id="cumTarget-${kv.id}">0</td>
+                        <td class="text-right">
+                            <input type="number" id="actual-${kv.id}" value="${kv.defaultActual}" onchange="calculateDashboard()" class="w-24 bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-right text-amber-400 font-black font-mono text-lg focus:outline-none focus:border-amber-400">
+                        </td>
+                        <td id="gap-${kv.id}" class="text-right">0</td>
+                        <td class="text-right text-emerald-400 font-black" id="newDaily-${kv.id}">0</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // === XỬ LÝ DỮ LIỆU ĐẦU NGÀY ===
+        function processPastedText() {
+            const pastedText = document.getElementById('rawPasteInput').value;
+            if (!pastedText.trim()) return;
+
+            const blocks = pastedText.split(/(?=HCM2\.\d|Khu vực \d)/);
+            let updateCounter = 0;
+
+            blocks.forEach(block => {
+                const matchKv = block.match(/HCM2\.([1-5])/);
+                if (matchKv) {
+                    const kvId = "HCM2." + matchKv[1];
+                    const numberMatches = block.match(/[\d\.,]+/g);
+                    if (numberMatches) {
+                        let validAmounts = numberMatches
+                            .map(n => parseInt(n.replace(/[\.,]/g, '')))
+                            .filter(num => num > 1000000);
+
+                        if (validAmounts.length > 0) {
+                            const amountInTrd = Math.round(validAmounts[validAmounts.length - 1] / 1000000);
+                            const inputField = document.getElementById(`actual-${kvId}`);
+                            if (inputField) {
+                                inputField.value = amountInTrd;
+                                updateCounter++;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Nếu phân tích theo mã HCM2.x không ra, thử tìm theo tên nhân viên (Copy từ Excel)
+            if (updateCounter === 0) {
+                const lines = pastedText.split('\n');
+                lines.forEach(line => {
+                    const parts = line.split('\t');
+                    if(parts.length >= 2) {
+                        let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
+                        let num = parseFloat(actualStr);
+                        let namePart = parts[0].toLowerCase();
+                        let matchedIndex = kvConfigurations.findIndex(r => namePart.includes(r.name.split(' - ')[1].toLowerCase()));
+                        
+                        if(!isNaN(num) && matchedIndex !== -1) {
+                            const inputField = document.getElementById(`actual-${kvConfigurations[matchedIndex].id}`);
+                            if(inputField) {
+                                inputField.value = num;
+                                updateCounter++;
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (updateCounter > 0) {
+                alert(`🎉 Đã trích xuất thành công số liệu lũy kế của ${updateCounter} QLKV HCM 2!`);
+                document.getElementById('rawPasteInput').value = "";
+                calculateDashboard();
+            } else {
+                alert("⚠️ Cấu trúc dán chưa chuẩn hoặc không khớp tên/mã KV. Anh vui lòng copy lại.");
+            }
+        }
+
+        function calculateDashboard() {
+            const daysPassed = parseInt(document.getElementById('daysPassed').value) || 1;
+            const TOTAL_WORKING_DAYS = parseInt(document.getElementById('totalWorkingDays').value) || 30;
+            const daysLeft = TOTAL_WORKING_DAYS - daysPassed;
+            
+            document.getElementById('lblDaysLeft').innerText = `${Math.max(0, daysLeft)} / ${TOTAL_WORKING_DAYS} Ngày LV`;
+
+            let sumMonthTarget = 0, sumBaseDaily = 0, sumActualInMonth = 0, sumNewDaily = 0;
+            let maxDeficitKvName = "Không có", maxDeficitValue = 0; 
+            let maxSurplusKvName = "Không có", maxSurplusValue = 0;
+
+            let commandText = `[ĐIỀU HÀNH CHỈ ĐẠO ĐẦU NGÀY GAPO - VÙNG HCM 2]\n`;
+            commandText += `📅 Tiến độ: Đã chạy ${daysPassed}/${TOTAL_WORKING_DAYS} ngày làm việc. Còn lại ${daysLeft} ngày quyết chiến.\n`;
+            commandText += `------------------------------------------------------------\n`;
+
+            kvConfigurations.forEach(kv => {
+                const monthTargetTrd = kv.monthTarget * 1000;
+                const baseDaily = monthTargetTrd / TOTAL_WORKING_DAYS;
+                const cumTarget = baseDaily * daysPassed;
+                const actualInMonth = parseFloat(document.getElementById(`actual-${kv.id}`).value) || 0;
+                
+                const gap = actualInMonth - cumTarget;
+                let safeDaysLeft = daysLeft > 0 ? daysLeft : 1; 
+                let newDaily = gap < 0 ? baseDaily + (Math.abs(gap) / safeDaysLeft) : baseDaily;
+
+                computedNewDailyState[kv.id] = newDaily;
+
+                if (gap < 0 && gap < maxDeficitValue) {
+                    maxDeficitValue = gap;
+                    maxDeficitKvName = kv.name.split(' - ')[1];
+                }
+                if (gap > 0 && gap > maxSurplusValue) {
+                    maxSurplusValue = gap;
+                    maxSurplusKvName = kv.name.split(' - ')[1];
+                }
+
+                document.getElementById(`baseDaily-${kv.id}`).innerText = Math.round(baseDaily).toLocaleString();
+                document.getElementById(`cumTarget-${kv.id}`).innerText = Math.round(cumTarget).toLocaleString();
+                
+                const gapCell = document.getElementById(`gap-${kv.id}`);
+                gapCell.innerText = Math.round(gap).toLocaleString();
+                gapCell.className = gap < 0 ? "text-right font-black font-mono text-red-400 text-lg" : "text-right font-black font-mono text-emerald-400 text-lg";
+
+                document.getElementById(`newDaily-${kv.id}`).innerText = Math.round(newDaily).toLocaleString();
+
+                sumMonthTarget += kv.monthTarget;
+                sumBaseDaily += baseDaily;
+                sumActualInMonth += actualInMonth;
+                sumNewDaily += newDaily;
+
+                const gapStatusText = gap < 0 ? `Hụt lũy kế: -${Math.abs(Math.round(gap))} Trđ (Ép bù số)` : `Vượt tiến độ: +${Math.round(gap)} Trđ`;
+                commandText += `👉 QLKV ${kv.name.split(' - ')[1]}:\n`;
+                commandText += `   • Tình trạng: ${gapStatusText}\n`;
+                commandText += `   • MỤC TIÊU NGÀY MỚI: ${Math.round(newDaily).toLocaleString()} TRĐ\n\n`;
+            });
+
+            globalSumNewDaily = sumNewDaily;
+            document.getElementById('lblCheckpointTarget').innerText = `MT: ${Math.round(globalSumNewDaily).toLocaleString()} Trđ`;
+
+            document.getElementById('vungTargetMonth').innerText = sumMonthTarget.toFixed(3) + " Tỷ";
+            document.getElementById('vungBaseDaily').innerText = (sumBaseDaily / 1000).toFixed(3) + " Tỷ";
+            document.getElementById('vungActualInMonth').innerText = (sumActualInMonth / 1000).toFixed(3) + " Tỷ";
+            document.getElementById('vungNewDaily').innerText = (sumNewDaily / 1000).toFixed(3) + " Tỷ";
+
+            document.getElementById('vungMaxDeficit').innerHTML = maxDeficitValue < 0 ? `⚠️ Hụt nhiều nhất: ${maxDeficitKvName} (${Math.round(maxDeficitValue).toLocaleString()} Trđ)` : `⚠️ Hụt nhiều nhất: Không có`;
+            document.getElementById('vungMaxSurplus').innerHTML = maxSurplusValue > 0 ? `⭐ Vượt nhiều nhất: ${maxSurplusKvName} (+${Math.round(maxSurplusValue).toLocaleString()} Trđ)` : `⭐ Vượt nhiều nhất: Không có`;
+
+            const totalVungGap = sumActualInMonth - (sumBaseDaily * daysPassed);
+            const statusLabel = document.getElementById('vungGapStatus');
+            if (totalVungGap < 0) {
+                statusLabel.innerText = `🔴 Hụt Vùng: ${Math.round(totalVungGap).toLocaleString()} Trđ`;
+                statusLabel.className = "text-xs px-3 py-1 font-black rounded-lg bg-red-950 text-red-400 border border-red-800";
+            } else {
+                statusLabel.innerText = `🟢 Vượt Vùng: +${Math.round(totalVungGap).toLocaleString()} Trđ`;
+                statusLabel.className = "text-xs px-3 py-1 font-black rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800";
+            }
+
+            commandText += `------------------------------------------------------------\n`;
+            commandText += `🎯 TỔNG MỤC TIÊU NGÀY TOÀN VÙNG: ${Math.round(sumNewDaily).toLocaleString()} TRĐ\n`;
+            commandText += `🔥 Yêu cầu các QLKV bám chặt tiến độ phòng giao dịch. Checkpoint liên tục trên Gapo.`;
+            document.getElementById('zaloCommand').value = commandText;
+
+            renderKvCheckpointTable();
+            updatePacingChart();
+            updateIntradayCommand(); 
+            saveToLocalStorage();
+        }
+
+        // === XỬ LÝ TRẠM CHECKPOINT ===
+        function addIntradayCheckpoint() {
+            const inputField = document.getElementById('intradayPasteInput');
+            const rawText = inputField.value.trim();
+            if (!rawText) return;
+
+            let amountInTrd = 0, isKvParsed = false;
+            
+            // Xử lý nếu dán bảng từ Excel có chứa tên nhân sự
+            const lines = rawText.split('\n');
+            let totalFromKvs = 0;
+            lines.forEach(line => {
+                const parts = line.split('\t');
+                if(parts.length >= 2) {
+                    let actualStr = parts[parts.length-1].replace(/,/g, '').replace(/\./g,'').trim();
+                    let num = parseFloat(actualStr);
+                    let namePart = parts[0].toLowerCase();
+                    let matchedIndex = kvConfigurations.findIndex(r => namePart.includes(r.name.split(' - ')[1].toLowerCase()));
+                    
+                    if(!isNaN(num) && matchedIndex !== -1) {
+                        const kvId = kvConfigurations[matchedIndex].id;
+                        latestKvCheckpointData[kvId] = num;
+                        totalFromKvs += num;
+                        isKvParsed = true;
+                    }
+                }
+            });
+
+            if (isKvParsed) {
+                amountInTrd = totalFromKvs;
+            } else {
+                // Xử lý nếu nhập số thủ công
+                let cleanText = rawText.replace(/,/g, '.'); 
+                let parsedFloat = parseFloat(cleanText);
+                if (!isNaN(parsedFloat)) {
+                    amountInTrd = parsedFloat < 100 ? Math.round(parsedFloat * 1000) : Math.round(parsedFloat);
+                } else {
+                    const totalMatch = rawText.match(/Tổng\s+.*?\s+([\d\.,]+)/);
+                    if (totalMatch) amountInTrd = Math.round(parseInt(totalMatch[1].replace(/[\.,]/g, '')) / 1000000);
+                }
+            }
+
+            if (amountInTrd <= 0) {
+                alert("⚠️ Không bóc tách được số tiền hợp lệ.");
+                return;
+            }
+
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            const completionPct = globalSumNewDaily > 0 ? (amountInTrd / globalSumNewDaily) * 100 : 0;
+
+            checkpointLog.push({ time: timeStr, amount: amountInTrd, pct: completionPct });
+            inputField.value = "";
+            renderCheckpointHistory();
+            renderKvCheckpointTable();
+            updatePacingChart();
+            updateIntradayCommand(); 
+            saveToLocalStorage();
+        }
+
+        function findClosestYesterdayCheckpoint(targetTimeStr) {
+            if (!yesterdayCheckpointLog || yesterdayCheckpointLog.length === 0) return null;
+            let targetMin = parseTime(targetTimeStr);
+            let closestCp = yesterdayCheckpointLog[0];
+            let minDiff = Infinity;
+            
+            yesterdayCheckpointLog.forEach(cp => {
+                let cpMin = parseTime(cp.time);
+                let diff = Math.abs(targetMin - cpMin);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestCp = cp;
+                }
+            });
+            return closestCp;
+        }
+
+        function updateIntradayCommand() {
+            const cmdArea = document.getElementById('intradayCommand');
+            if (checkpointLog.length === 0) {
+                cmdArea.value = "";
+                cmdArea.placeholder = "Anh nhập dữ liệu checkpoint bên trên, lệnh chỉ đạo sẽ tự động sinh ra ở đây...";
+                return;
+            }
+
+            const latestLog = checkpointLog[checkpointLog.length - 1];
+            const timeStr = latestLog.time;
+
+            let cmd = `[CẬP NHẬT TIẾN ĐỘ CHECKPOINT - VÙNG HCM 2]\n`;
+            cmd += `⏰ Thời gian ghi nhận: ${timeStr} (Check lần ${checkpointLog.length})\n`;
+            cmd += `🎯 TOÀN VÙNG: ${latestLog.amount.toLocaleString()} Trđ / ${Math.round(globalSumNewDaily).toLocaleString()} Trđ (${latestLog.pct.toFixed(1)}%)\n`;
+            cmd += `------------------------------------------------------------\n`;
+            
+            cmd += `📊 BIẾN ĐỘNG NHỊP ĐỘ SỐ TRONG NGÀY:\n`;
+            if (checkpointLog.length > 1) {
+                const prevLog = checkpointLog[checkpointLog.length - 2];
+                const diffToday = latestLog.amount - prevLog.amount;
+                const minDiff = parseTime(latestLog.time) - parseTime(prevLog.time);
+                
+                if (diffToday > 0) {
+                    cmd += `   • So với lần check trước (${prevLog.time}): Tăng trưởng +${diffToday.toLocaleString()} Trđ sau ${minDiff} phút 🚀\n`;
+                } else {
+                    cmd += `   • So với lần check trước (${prevLog.time}): ĐỨNG SỐ (0 Trđ) sau ${minDiff} phút 🚨 NGUY HIỂM!\n`;
+                }
+            } else {
+                cmd += `   • So với lần check trước: Đây là lần checkpoint đầu tiên trong ngày.\n`;
+            }
+
+            const closestYesterday = findClosestYesterdayCheckpoint(timeStr);
+            if (closestYesterday) {
+                const diffYesterday = latestLog.amount - closestYesterday.amount;
+                cmd += `   • So với CÙNG KHUNG GIỜ HÔM QUA (${closestYesterday.time}): `;
+                if (diffYesterday > 0) {
+                    cmd += `VƯỢT ĐƯỢC +${diffYesterday.toLocaleString()} Trđ 🔥\n`;
+                } else if (diffYesterday < 0) {
+                    cmd += `BỊ HỤT ${diffYesterday.toLocaleString()} Trđ ⚠️\n`;
+                } else {
+                    cmd += `BẰNG SỐ (Đi ngang)\n`;
+                }
+            } else {
+                cmd += `   • So với CÙNG KHUNG GIỜ HÔM QUA: Chưa có dữ liệu.\n`;
+            }
+
+            cmd += `------------------------------------------------------------\n`;
+            cmd += `🔥 CHI TIẾT TIẾN ĐỘ TỪNG KHU VỰC:\n`;
+
+            kvConfigurations.forEach(kv => {
+                const newDaily = computedNewDailyState[kv.id] || 0;
+                const currentIntraday = latestKvCheckpointData[kv.id] || 0;
+                const pct = newDaily > 0 ? (currentIntraday / newDaily) * 100 : 0;
+                const remaining = newDaily - currentIntraday;
+                
+                let remainingStr = remaining > 0 ? `Cần kéo: ${Math.round(remaining).toLocaleString()} Trđ` : "ĐÃ XONG SỐ 🎉";
+                cmd += `👉 ${kv.name.split(' - ')[1]}: ${currentIntraday.toLocaleString()} / ${Math.round(newDaily).toLocaleString()} Trđ (${pct.toFixed(1)}%) => ${remainingStr}\n`;
+            });
+
+            cmdArea.value = cmd;
+        }
+
+        // === CÁC HÀM RENDER KHÁC ===
+        function renderKvCheckpointTable() {
+            const tbody = document.getElementById('kvCheckpointTableBody');
+            tbody.innerHTML = "";
+            kvConfigurations.forEach(kv => {
+                const newDaily = computedNewDailyState[kv.id] || 0;
+                const currentIntraday = latestKvCheckpointData[kv.id] || 0;
+                const pct = newDaily > 0 ? (currentIntraday / newDaily) * 100 : 0;
+                const remaining = newDaily - currentIntraday;
+                
+                let remainingStr = remaining > 0 ? Math.round(remaining).toLocaleString() + " Trđ" : "🔥 XONG";
+                let pctColor = "text-slate-300";
+                let barColor = "bg-slate-700";
+
+                if (pct >= 100) { pctColor = "text-green-400 font-black"; barColor = "bg-green-500"; }
+                else if (pct >= 70) { pctColor = "text-emerald-400 font-black"; barColor = "bg-emerald-500"; }
+                else if (pct >= 40) { pctColor = "text-yellow-400 font-black"; barColor = "bg-yellow-500"; }
+                else { barColor = "bg-cyan-500"; }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 transition border-b border-slate-700">
+                        <td class="font-bold text-slate-300">${kv.name}</td>
+                        <td class="text-right">${Math.round(newDaily).toLocaleString()}</td>
+                        <td class="text-right font-black text-amber-400">${currentIntraday.toLocaleString()}</td>
+                        <td class="text-center ${pctColor}">${pct.toFixed(1)}%</td>
+                        <td class="text-right text-slate-400 font-bold">${remainingStr}</td>
+                        <td class="align-middle">
+                            <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-700 shadow-inner">
+                                <div class="h-full rounded-full transition-all duration-700 ease-in-out ${barColor}" style="width: ${Math.min(pct, 100)}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderCheckpointHistory() {
+            const tbody = document.getElementById('checkpointHistoryBody');
+            if (checkpointLog.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-500 italic">Chưa có dữ liệu checkpoint</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = "";
+            checkpointLog.forEach((cp, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-700 text-slate-300 hover:bg-slate-800/50">
+                        <td class="py-2 px-1">${index + 1}</td>
+                        <td class="py-2 px-1 text-cyan-400 font-mono">${cp.time}</td>
+                        <td class="py-2 px-1 text-right text-amber-400 font-bold">${cp.amount.toLocaleString()}</td>
+                        <td class="py-2 px-1 text-right font-bold text-slate-400">${cp.pct.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function initPacingChart() {
+            const ctx = document.getElementById('miniPacingChart').getContext('2d');
+            pacingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Đầu ngày', 'Check 1', 'Check 2', 'Check 3', 'Check 4'],
+                    datasets: [
+                        { label: 'Target', data: [0, 30, 60, 85, 100], borderColor: '#3b82f6', borderDash: [3, 3], fill: false, tension: 0.1 },
+                        { label: 'Thực Tế', data: [0, 0, 0, 0, 0], borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.1)', fill: true, tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { 
+                        y: { min: 0, max: 120, grid: { color: '#334155' }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updatePacingChart() {
+            if (!pacingChart) return;
+            let chartData = [0, 0, 0, 0, 0];
+            for (let i = 0; i < Math.min(checkpointLog.length, 4); i++) {
+                chartData[i + 1] = checkpointLog[i].pct;
+            }
+            pacingChart.data.datasets[1].data = chartData;
+            pacingChart.update();
+        }
+
+        function copyIntradayCommandText() {
+            const area = document.getElementById('intradayCommand');
+            if(!area.value.trim()) {
+                alert("⚠️ Chưa có dữ liệu lệnh để copy. Anh hãy ghi nhận Checkpoint trước nhé.");
+                return;
+            }
+            area.select();
+            document.execCommand('copy');
+            alert('📋 Đã copy Lệnh Điều Hành Checkpoint thành công!');
+        }
+
+        function copyCommandText() {
+            const area = document.getElementById('zaloCommand');
+            area.select();
+            document.execCommand('copy');
+            alert('📋 Đã copy Lệnh Điều Hành Đầu Ngày!');
+        }
+
+        window.onload = function() {
+            loadFromLocalStorage(); 
+            initTargetSettings();   
+            initTable();            
+            initPacingChart();
+            renderCheckpointHistory();
+            calculateDashboard();   
+        };
+    </script>
 </body>
 </html>
